@@ -138,12 +138,12 @@ func (c *Client) delete(path string) error {
 
 // ---------- 系统配置 ----------
 
-// configRaw 用于处理 emailDomains 可能是字符串的情况。
+// configRaw 用于处理 emailDomains/maxEmails 可能是字符串的情况。
 type configRaw struct {
 	DefaultRole  string      `json:"defaultRole"`
 	EmailDomains interface{} `json:"emailDomains"`
 	AdminContact string      `json:"adminContact"`
-	MaxEmails    int         `json:"maxEmails"`
+	MaxEmails    interface{} `json:"maxEmails"`
 }
 
 // GetConfig 获取系统配置。
@@ -156,7 +156,14 @@ func (c *Client) GetConfig() (*Config, error) {
 	cfg := &Config{
 		DefaultRole:  raw.DefaultRole,
 		AdminContact: raw.AdminContact,
-		MaxEmails:    raw.MaxEmails,
+	}
+
+	// 解析 maxEmails（可能是 int 或 string）
+	switch v := raw.MaxEmails.(type) {
+	case float64:
+		cfg.MaxEmails = int(v)
+	case string:
+		fmt.Sscanf(v, "%d", &cfg.MaxEmails)
 	}
 
 	switch v := raw.EmailDomains.(type) {
